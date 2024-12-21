@@ -112,46 +112,46 @@
         src: templates/service.j2
         dest: '{{ vault_service_path }}'
     
-#     - name: Start service vault, if not started
-#       systemd:
-#         name: vault
-#         enabled: true
-#         state: restarted 
-#         daemon_reload: true
+    - name: Start service vault, if not started
+      systemd:
+        name: vault
+        enabled: true
+        state: restarted 
+        daemon_reload: true
 
-# - name: Initializing Vault on Leader node
-#   hosts: leader
-#   vars_files: 
-#     - variable/variables
-#   become: true
-#   environment:
-#     VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
-#   tasks:
-#     - name: Check Vault status
-#       command: vault --version
+- name: Initializing Vault on Leader node
+  hosts: leader
+  vars_files: 
+    - variable/variables
+  become: true
+  environment:
+    VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
+  tasks:
+    - name: Check Vault status
+      command: vault --version
 
-#     - name: Initialize Vault
-#       shell: vault operator init
-#       register: app_status
-#     - debug: msg={{app_status.stdout_lines}} 
+    - name: Initialize Vault
+      shell: vault operator init
+      register: app_status
+    - debug: msg={{app_status.stdout_lines}} 
 
-#     - name: Save Vault initialization output to a file
-#       copy:
-#         content: "{{ app_status.stdout_lines | join('\n') }}"
-#         dest: /home/{{user}}/vault-init-output.txt
-#         owner: "{{ vault_user }}"
-#         group: "{{ vault_user }}"
-#         mode: '0600'
+    - name: Save Vault initialization output to a file
+      copy:
+        content: "{{ app_status.stdout_lines | join('\n') }}"
+        dest: /home/{{ vault_user }}/vault-init-output.txt
+        owner: "{{ vault_user }}"
+        group: "{{ vault_user }}"
+        mode: '0600'
 
-# - name: Joining Nodes to Vault Cluster
-#   hosts: follower
-#   vars_files: 
-#     - variable/variables
-#   become: true
-#   environment:
-#     VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
-#   tasks:
-#     - name: Joining Cluster 
-#       shell: vault operator raft join http://{{ hostvars[groups['leader'][0]]['inventory_hostname'] }}:{{vault_api_port}}
-#       register: app_status
-#     - debug: msg={{app_status.stdout_lines}} 
+- name: Joining Nodes to Vault Cluster
+  hosts: follower
+  vars_files: 
+    - variable/variables
+  become: true
+  environment:
+    VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
+  tasks:
+    - name: Joining Cluster 
+      shell: vault operator raft join http://{{ hostvars[groups['leader'][0]]['inventory_hostname'] }}:{{vault_api_port}}
+      register: app_status
+    - debug: msg={{app_status.stdout_lines}} 
