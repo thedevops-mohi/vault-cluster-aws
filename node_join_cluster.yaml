@@ -1,0 +1,117 @@
+---
+- name: Performing Prerequites 
+  hosts: new_node
+  become: true
+  vars_files: 
+    - variable/variables
+  
+  tasks:
+
+  - name: Setting hostname
+    ansible.builtin.hostname:
+      name: "{{ inventory_hostname }}"
+
+  - name: Updating hosts file
+    ansible.builtin.template:
+      src: templates/hosts.j2
+      dest: /etc/hosts
+  
+  - name: Updating package cache
+    apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+  - name: Installing curl,unzip, jq
+    apt:
+      name: 
+      - curl
+      - unzip
+      - jq
+      state: latest
+
+- name: Downloading, Unzipping, and Placing Vault Binary
+  hosts: new_node
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks:
+    - name: Downloading Vault version {{ version }} Binary
+      get_url:
+        url: https://releases.hashicorp.com/vault/{{ version }}/vault_{{ version }}_linux_amd64.zip
+        dest: /tmp/vault_{{ version }}_linux_amd64.zip
+
+    - name: Unpacking File on Server
+      unarchive:
+        src: /tmp/vault_{{ version }}_linux_amd64.zip
+        dest: /tmp/
+        remote_src: yes
+    
+    - name: Copying Vault Binary to /usr/local/bin
+      copy:
+        src: /tmp/vault
+        dest: /usr/local/bin/vault
+        owner: root
+        group: root
+        mode: '0751'
+        remote_src: true
+    
+- name: Configuring Vault Cluster
+  hosts: new_node
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks: 
+    - name: Creating directory for Raft backend storage
+      file:
+        path: /opt/vault/data
+        state: directory
+        recurse: yes
+        owner: vault
+        group: vault
+        mode: "0751"
+    
+    - name: Creating directory for Vault Config
+      file:
+        path: /etc/vault.d/certs/
+        state: directory
+        recurse: yes
+        owner: vault
+        group: vault
+        mode: "0751"
+        
+    - name: Creating vault Configuration File
+      file:
+        path: /etc/vault.d/vault.hcl
+        state: touch
+        owner: vault
+        group: vault
+        mode: "0751"
+
+    - name: Updating hosts file
+      template:
+        src: templates/vault.j2
+        dest: /etc/vault.d/vault.hcl
+
+- name: Creating, Enabling and Starting Vault Service Daemon
+  hosts: new_node
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks:
+    - name: Creating vault Service File
+      file:
+        path: /etc/systemd/system/vault.service
+        state: touch
+        owner: root
+        group: root
+        mode: "0751"
+
+    - name: Configuring Vault Service Daemon
+      template:
+        src: templates/service.j2
+        dest: /etc/systemd/system/vault.service
+    
+    - name: Start service vault, if not started
+      systemd:
+        name: vault
+        enabled: true
+        state: restarted 
+        daemon_reload: true

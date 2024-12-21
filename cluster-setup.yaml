@@ -1,0 +1,157 @@
+---
+- name: Performing Prerequites 
+  hosts: vault
+  become: true
+  vars_files: 
+    - variable/variables
+  
+  tasks:
+  - name: Creating vault group
+    group:
+      name: '{{ vault_group }}'
+      system: true
+    #when: vault_create_account
+  - name: Creating vault user 
+    user:
+      name: '{{ vault_user }}'
+      create_home: yes
+      group: '{{ vault_group }}'
+      shell: /bin/false
+      system: true
+
+  - name: Updating package cache
+    apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+  - name: Installing curl,unzip, jq
+    apt:
+      name: 
+      - curl
+      - unzip
+      - jq
+      state: latest
+
+- name: Downloading, Unzipping, and Placing Vault Binary
+  hosts: vault
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks:
+    - name: Downloading Vault version {{ version }} Binary
+      get_url:
+        url: https://releases.hashicorp.com/vault/{{ version }}/vault_{{ version }}_linux_amd64.zip
+        dest: /tmp/vault_{{ version }}_linux_amd64.zip
+
+    - name: Unpacking File on Server
+      unarchive:
+        src: /tmp/vault_{{ version }}_linux_amd64.zip
+        dest: /tmp/
+        remote_src: yes
+    
+    - name: Copying Vault Binary to /usr/local/bin
+      copy:
+        src: /tmp/vault
+        dest: /usr/local/bin/vault
+        owner: root
+        group: root
+        mode: '0751'
+        remote_src: true
+    
+- name: Configuring Vault Cluster
+  hosts: vault
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks: 
+    - name: Creating directory for Raft backend storage
+      file:
+        path: '{{vault_data_directory}}'
+        state: directory
+        recurse: yes
+        owner: '{{vault_user}}'
+        group: '{{vault_group}}'
+        mode: "0751"
+    
+    - name: Creating directory for Vault Config
+      file:
+        path: '{{vault_cert_directory}}'
+        state: directory
+        recurse: yes
+        owner: '{{vault_user}}'
+        group: '{{vault_group}}'
+        mode: "0751"
+        
+    - name: Creating vault Configuration File
+      file:
+        path: '{{vault_config_file}}'
+        state: touch
+        owner: '{{vault_user}}'
+        group: '{{vault_group}}'
+        mode: "0751"
+
+    - name: Updating hosts file
+      template:
+        src: templates/vault.j2
+        dest: '{{vault_config_file}}'
+
+- name: Creating, Enabling and Starting Vault Service Daemon
+  hosts: vault
+  become: true
+  vars_files: 
+    - variable/variables
+  tasks:
+    - name: Creating vault Service File
+      file:
+        path: '{{ vault_service_path }}'
+        state: touch
+        owner: root
+        group: root
+        mode: "0751"
+
+    - name: Configuring Vault Service Daemon
+      template:
+        src: templates/service.j2
+        dest: '{{ vault_service_path }}'
+    
+#     - name: Start service vault, if not started
+#       systemd:
+#         name: vault
+#         enabled: true
+#         state: restarted 
+#         daemon_reload: true
+
+# - name: Initializing Vault on Leader node
+#   hosts: leader
+#   vars_files: 
+#     - variable/variables
+#   become: true
+#   environment:
+#     VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
+#   tasks:
+#     - name: Check Vault status
+#       command: vault --version
+
+#     - name: Initialize Vault
+#       shell: vault operator init
+#       register: app_status
+#     - debug: msg={{app_status.stdout_lines}} 
+
+#     - name: Save Vault initialization output to a file
+#       copy:
+#         content: "{{ app_status.stdout_lines | join('\n') }}"
+#         dest: /home/{{user}}/vault-init-output.txt
+#         owner: "{{ vault_user }}"
+#         group: "{{ vault_user }}"
+#         mode: '0600'
+
+# - name: Joining Nodes to Vault Cluster
+#   hosts: follower
+#   vars_files: 
+#     - variable/variables
+#   become: true
+#   environment:
+#     VAULT_ADDR: http://{{ inventory_hostname }}:{{vault_api_port}}
+#   tasks:
+#     - name: Joining Cluster 
+#       shell: vault operator raft join http://{{ hostvars[groups['leader'][0]]['inventory_hostname'] }}:{{vault_api_port}}
+#       register: app_status
+#     - debug: msg={{app_status.stdout_lines}} 

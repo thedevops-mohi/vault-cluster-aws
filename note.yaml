@@ -1,0 +1,22 @@
+1. change hostname
+2. Populate host file
+3. update server
+4. Download unzip, curl, and jq
+5. Downlod vault binary
+6. Unzip vault binary 
+7. Move Vault binary to /usr/local/bin/
+8. Create Vault User
+9. Create Directory /etc/vault.d/
+10. Create config file /etc/vault.d/vault.hcl
+11. Create Directory for Raft /opt/vault/data
+12. Change Own of /opt/vault/ to vault user
+
+13. Create Vault Service
+14. Enable Vault Service
+15. Start Vault Service
+16. Initialize Vault (vault operator init -key-shares=5 -key-threshold=3)
+17. Join Cluster (vault operator raft join https://<leader_node_ip>:8200)
+18. Verify Cluster (vault operator raft list-peers)
+
+
+https://releases.hashicorp.com/vault/<version>/vault_<version>_linux_amd64.zip

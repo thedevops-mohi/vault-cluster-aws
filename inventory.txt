@@ -1,0 +1,18 @@
+[vault]
+#vault-1.us ansible_user=root
+#vault-2.us ansible_user=root
+#vault-3.us ansible_user=root
+192.168.0.35 ansible_user=root
+
+
+
+
+[leader]
+vault-1.us ansible_user=root
+
+[follower]
+vault-2.us ansible_user=root
+vault-3.us ansible_user=root
+
+[new_node]
+vault-4.us ansible_user=root

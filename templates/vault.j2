@@ -1,0 +1,35 @@
+#managed by ansible
+storage "raft" {
+    path    = "{{ vault_data_directory }}"
+    node_id = "{{ inventory_hostname }}"  # Automatically sets node_id to the hostname of each node
+  
+    # Retry Join Block
+    {% for host in groups[hostvars[inventory_hostname].group_names[0]] if not host == inventory_hostname %}
+    retry_join {
+        leader_api_addr = "http://{{ inventory_hostname }}:{{vault_api_port}}"
+    }
+    {% endfor %}
+}
+
+ui = true
+
+# Listener Configuration
+listener "tcp" {
+    address         = "0.0.0.0:{{vault_api_port}}"
+    cluster_address = "0.0.0.0:{{vault_cluster_port}}"
+    tls_disable     = 1
+    # tls_cert_file = "/etc/vault.d/certs/vault-{{ inventory_hostname }}.crt"
+    # tls_key_file  = "/etc/vault.d/certs/vault-{{ inventory_hostname }}.key"
+}
+
+# AWS KMS Auto-Unseal
+seal "awskms" {
+    region     = "{{ region }}"       # Update to your AWS region
+    kms_key_id = "{{ kms_key_id }}"  # Replace with your AWS KMS key ID or ARN
+    #access_key   = "{{ access_key }}"  # Replace with your AWS access key
+    #secret_key   = "{{ secret_key }}"  # Replace with your AWS secret key
+}
+
+# API and Cluster Addresses
+api_addr     = "http://{{ inventory_hostname }}:{{vault_api_port}}"  # Automatically sets the api_addr to the current node
+cluster_addr = "http://{{ inventory_hostname }}:{{vault_cluster_port}}"  # Automatically sets the cluster_addr to the current node
