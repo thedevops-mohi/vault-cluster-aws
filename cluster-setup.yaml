@@ -88,10 +88,10 @@
         group: '{{vault_group}}'
         mode: "0751"
 
-    # - name: Updating hosts file
-    #   template:
-    #     src: templates/vault.j2
-    #     dest: '{{vault_config_file}}'
+    - name: Updating hosts file
+      template:
+        src: templates/vault.j2
+        dest: '{{vault_config_file}}'
 
 - name: Creating, Enabling and Starting Vault Service Daemon
   hosts: vault
