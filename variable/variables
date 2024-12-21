@@ -13,5 +13,3 @@ vault_service_path: "/etc/systemd/system/vault.service"
 #AWS KMS Vault Auto Unseal 
 region: "us-east-1"
 kms_key_id: "arn:aws:kms:us-east-1:442426885327:alias/vault-ansible-unseal"
-#access_key: ""
-#secret_key: ""

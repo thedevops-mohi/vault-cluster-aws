@@ -26,8 +26,6 @@ listener "tcp" {
 seal "awskms" {
     region     = "{{ region }}"       # Update to your AWS region
     kms_key_id = "{{ kms_key_id }}"  # Replace with your AWS KMS key ID or ARN
-    #access_key   = "{{ access_key }}"  # Replace with your AWS access key
-    #secret_key   = "{{ secret_key }}"  # Replace with your AWS secret key
 }
 
 # API and Cluster Addresses
