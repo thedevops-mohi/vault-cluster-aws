@@ -1,16 +1,16 @@
 [vault]
-ip-10-0-48-72.ec2.internal ansible_user=root
-ip-10-0-22-88.ec2.internal ansible_user=root
-ip-10-0-20-156.ec2.internal ansible_user=root
+ip-10-0-61-109.ec2.internal ansible_user=root
+ip-10-0-30-69.ec2.internal ansible_user=root
+ip-10-0-14-86.ec2.internal ansible_user=root
 #192.168.0.35 ansible_user=root
 
 
 [leader]
-ip-10-0-48-72.ec2.internal ansible_user=root
+ip-10-0-61-109.ec2.internal ansible_user=root
 
 [follower]
-ip-10-0-22-88.ec2.internal ansible_user=root
-ip-10-0-20-156.ec2.internal ansible_user=root
+ip-10-0-30-69.ec2.internal ansible_user=root
+ip-10-0-14-86.ec2.internal ansible_user=root
 
 [new_node]
 vault-4.us ansible_user=root
